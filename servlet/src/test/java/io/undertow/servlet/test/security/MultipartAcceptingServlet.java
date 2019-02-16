@@ -15,34 +15,35 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package io.undertow.servlet.test.security;
 
-package io.undertow.servlet.test.errorpage;
-
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Enumeration;
-
+import java.io.InputStreamReader;
+import java.util.Collection;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
 
 /**
- * @author Stuart Douglas
+ * A servlet that expects to receive a multipart post request with 2 parts.
  */
-public class PathServlet extends HttpServlet {
+public class MultipartAcceptingServlet extends HttpServlet {
+
     @Override
-    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-        try (PrintWriter w = resp.getWriter()) {
-            w.println(req.getPathInfo());
-            // write all the attributes
-            Enumeration<String> e = req.getAttributeNames();
-            while (e.hasMoreElements()) {
-                String attr = e.nextElement();
-                w.print(attr);
-                w.print("=");
-                w.println(req.getAttribute(attr));
+    protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
+        Collection<Part> parts = req.getParts();
+        if (parts.size() != 2) {
+            resp.setStatus(418);
+        }
+        for (Part part: parts) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(part.getInputStream()));
+            if (!reader.readLine().startsWith("0123")) {
+                resp.setStatus(418);
             }
         }
     }
+
 }
